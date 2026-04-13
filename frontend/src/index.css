@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Highlight marks for adversarial/suspicious/encoding phrases */
+mark.adversarial {
+  background: rgba(226, 75, 74, 0.18);
+  border-bottom: 2px solid #E24B4A;
+  border-radius: 2px;
+  color: inherit;
+}
+
+mark.suspicious {
+  background: rgba(186, 117, 23, 0.15);
+  border-bottom: 2px solid #BA7517;
+  border-radius: 2px;
+  color: inherit;
+}
+
+mark.encoding {
+  background: rgba(83, 74, 183, 0.15);
+  border-bottom: 2px solid #534AB7;
+  border-radius: 2px;
+  color: inherit;
+}
+
+/* Pulse animation for the "analyzing" indicator */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+
+.analyzing-dot {
+  animation: pulse-dot 1s ease-in-out infinite;
+}
