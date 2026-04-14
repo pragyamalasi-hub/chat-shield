@@ -2,6 +2,9 @@
 
 A Grammarly-like web app that detects and classifies adversarial, jailbreak, and injection prompts in real time — before they reach an AI model.
 
+Live Demo: https://chat-shield-nu.vercel.app/
+
+
 ---
 
 ## 🎯 What It Does
