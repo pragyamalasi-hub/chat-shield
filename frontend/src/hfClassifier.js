@@ -6,12 +6,17 @@
 // and swapped for another model without touching App.jsx.
 // =============================================================================
 
-const HF_API_URL =
-  'https://api-inference.huggingface.co/models/facebook/bart-large-mnli'
+const HF_API_URL = 'http://localhost:3001/hf'
 
 // Labels the model will classify against.
 // Order doesn't matter — BART-MNLI scores each independently.
-const CANDIDATE_LABELS = ['safe', 'adversarial', 'jailbreak attempt']
+const CANDIDATE_LABELS = ["benign user query",
+  "prompt injection attack",
+  "jailbreak attempt",
+  "trying to access system prompt",
+  "trying to bypass safety restrictions",
+  "roleplay to override AI behavior"
+];
 
 // How long to wait before declaring the request a timeout (ms)
 const REQUEST_TIMEOUT_MS = 12000
@@ -81,7 +86,7 @@ export async function classifyWithHF(text) {
       // multi_label: true lets the model score all labels independently
       // (vs. forcing them to sum to 1). This gives us richer signal.
       body: JSON.stringify({
-        inputs: text,
+        prompt: text,
         parameters: {
           candidate_labels: CANDIDATE_LABELS,
           multi_label: true,
@@ -134,15 +139,17 @@ export async function classifyWithHF(text) {
     // labels and scores are parallel arrays, sorted highest-score first.
     const data = await response.json()
 
-    if (!data.labels || !data.scores) {
-      return {
-        status: 'error',
-        classification: null,
-        scores: null,
-        topLabel: null,
-        topScore: null,
-        errorMessage: 'Unexpected API response shape.',
-      }
+    return {
+      status: 'success',
+      classification: data.classification,
+      scores: {
+        safe: data.classification === 'SAFE' ? 1 : 0,
+        adversarial: data.classification === 'ADVERSARIAL' ? 1 : 0,
+        jailbreakAttempt: data.classification === 'ADVERSARIAL' ? 1 : 0,
+      },
+      topLabel: data.classification,
+      topScore: data.confidence,
+      errorMessage: null,
     }
 
     // Build a keyed score map for easy lookup
@@ -151,9 +158,17 @@ export async function classifyWithHF(text) {
       scoreMap[label] = data.scores[i]
     })
 
-    const safeScore           = scoreMap['safe']            ?? 0
-    const adversarialScore    = scoreMap['adversarial']     ?? 0
-    const jailbreakScore      = scoreMap['jailbreak attempt'] ?? 0
+    // ✅ Correct mapping from your actual labels
+    const safeScore = scoreMap["benign user query"] ?? 0
+
+    const adversarialScore = Math.max(
+      scoreMap["prompt injection attack"] ?? 0,
+      scoreMap["trying to access system prompt"] ?? 0,
+      scoreMap["trying to bypass safety restrictions"] ?? 0,
+      scoreMap["roleplay to override AI behavior"] ?? 0
+    )
+
+    const jailbreakScore = scoreMap["jailbreak attempt"] ?? 0
 
     const topLabel = data.labels[0]  // highest scoring label
     const topScore = data.scores[0]
@@ -165,13 +180,15 @@ export async function classifyWithHF(text) {
     //   • Otherwise → SAFE
     //
     // Thresholds are intentionally conservative to reduce false positives.
-    const ADVERSARIAL_THRESHOLD = 0.45   // high confidence needed for hard block
-    const SUSPICIOUS_THRESHOLD  = 0.25   // lower bar for a yellow warning
+    const ADVERSARIAL_THRESHOLD = 0.35   // high confidence needed for hard block
+    const SUSPICIOUS_THRESHOLD  = 0.20   // lower bar for a yellow warning
 
     let hfClassification
-    if (adversarialScore >= ADVERSARIAL_THRESHOLD || jailbreakScore >= ADVERSARIAL_THRESHOLD) {
+    const combinedAttackScore = Math.max(adversarialScore, jailbreakScore)
+
+    if (combinedAttackScore >= ADVERSARIAL_THRESHOLD) {
       hfClassification = 'ADVERSARIAL'
-    } else if (adversarialScore >= SUSPICIOUS_THRESHOLD || jailbreakScore >= SUSPICIOUS_THRESHOLD) {
+    } else if (combinedAttackScore >= SUSPICIOUS_THRESHOLD) {
       hfClassification = 'SUSPICIOUS'
     } else {
       hfClassification = 'SAFE'
@@ -250,7 +267,7 @@ export function fuseResults(localResult, hfResult) {
   const hfRiskScore = 1 - (hfResult.scores?.safe ?? 1)
 
   // Weighted fusion of confidence scores
-  const fusedConfidence = Math.min(localConf * 0.40 + hfRiskScore * 0.60, 1)
+  const fusedConfidence = Math.min(localConf * 0.30 + hfRiskScore * 0.70, 1)
 
   // Classification fusion — most severe wins
   const SEVERITY = { SAFE: 0, SUSPICIOUS: 1, ADVERSARIAL: 2 }
