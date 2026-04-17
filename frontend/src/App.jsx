@@ -352,15 +352,6 @@ function SignalPanel({ localResult, hfResult, hfStatus }) {
             </>
           )}
 
-          {hfStatus === 'no_key' && (
-            <>
-              <div className="signal-verdict sig-idle">OFFLINE</div>
-              <div className="signal-conf">no API key</div>
-              <div className="hf-msg hf-info">
-                Set <code>VITE_HF_API_KEY</code> in <code>.env</code> to enable AI layer.
-              </div>
-            </>
-          )}
 
           {hfStatus === 'error' && (
             <>
@@ -398,7 +389,7 @@ export default function App() {
   const [prompt,      setPrompt]      = useState('')
   const [localResult, setLocalResult] = useState(null)   // from analyzeLocally()
   const [hfResult,    setHfResult]    = useState(null)   // from classifyWithHF()
-  const [hfStatus,    setHfStatus]    = useState('idle') // 'idle'|'pending'|'success'|'loading'|'rate_limit'|'no_key'|'error'
+  const [hfStatus, setHfStatus] = useState('idle') // 'idle'|'pending'|'success'|'loading'|'rate_limit'|'error'
   const [fusedResult, setFusedResult] = useState(null)   // from fuseResults()
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [fixedPrompt, setFixedPrompt] = useState(null)
@@ -447,7 +438,11 @@ export default function App() {
     setHfStatus('pending')
     const result = await classifyWithHF(text)
     setHfResult(result)
-    setHfStatus(result.status)
+
+    const normalizedStatus = result.status === 'no_key' ? 'error' : result.status
+
+    setHfStatus(normalizedStatus)
+
     // Re-fuse using the ref (avoids stale closure over localResult state)
     if (localResultRef.current) {
       setFusedResult(fuseResults(localResultRef.current, result))
@@ -552,13 +547,6 @@ export default function App() {
           </div>
         </div>
         <div className="top-right">
-          {/* Live HF connection status dot */}
-          <div className="hf-indicator" title={`HuggingFace BART-MNLI: ${hfStatus}`}>
-            <span className={`hf-dot ${hfStatus === 'success' ? 'hf-on' : hfStatus === 'pending' ? 'hf-pending' : 'hf-off'}`} />
-            <span className="hf-indicator-label">
-              HF {hfStatus === 'success' ? 'live' : hfStatus === 'pending' ? '…' : hfStatus === 'no_key' ? 'no key' : hfStatus}
-            </span>
-          </div>
           <RiskBadge classification={classification} hasText={hasText} />
         </div>
       </header>
