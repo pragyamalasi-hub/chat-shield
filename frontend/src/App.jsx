@@ -259,7 +259,7 @@ export default function App() {
     if (apiMode) {
       // Call the backend Express API
       try {
-        const res = await fetch('/analyze-prompt', {
+        const res = await fetch("https://chat-shield.onrender.com/analyze-prompt", {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: text }),
