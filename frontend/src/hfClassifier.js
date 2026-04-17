@@ -1,15 +1,6 @@
-// =============================================================================
-// hfClassifier.js — Hugging Face Inference API helper
-//
-// Performs zero-shot classification using facebook/bart-large-mnli.
-// This module is intentionally kept separate so it can be tested in isolation
-// and swapped for another model without touching App.jsx.
-// =============================================================================
 
 const HF_API_URL = 'http://localhost:3001/hf'
 
-// Labels the model will classify against.
-// Order doesn't matter — BART-MNLI scores each independently.
 const CANDIDATE_LABELS = ["benign user query",
   "prompt injection attack",
   "jailbreak attempt",
@@ -18,7 +9,6 @@ const CANDIDATE_LABELS = ["benign user query",
   "roleplay to override AI behavior"
 ];
 
-// How long to wait before declaring the request a timeout (ms)
 const REQUEST_TIMEOUT_MS = 12000
 
 /**
@@ -31,6 +21,7 @@ const REQUEST_TIMEOUT_MS = 12000
  */
 
 /**
+
  * Call the Hugging Face Inference API and return a structured result.
  *
  * @param {string} text  — the user's raw prompt
@@ -47,20 +38,9 @@ const REQUEST_TIMEOUT_MS = 12000
  * }
  */
 export async function classifyWithHF(text) {
-  // ── Guard: API key must be present ──────────────────────────────────────────
-  const apiKey = import.meta.env.VITE_HF_API_KEY
-  if (!apiKey || apiKey.trim() === '') {
-    return {
-      status: 'no_key',
-      classification: null,
-      scores: null,
-      topLabel: null,
-      topScore: null,
-      errorMessage: 'VITE_HF_API_KEY is not set. Add it to your .env file.',
-    }
-  }
 
-  // ── Guard: don't waste tokens on empty/very short text ─────────────────────
+
+
   if (!text || text.trim().length < 3) {
     return {
       status: 'success',
@@ -72,7 +52,6 @@ export async function classifyWithHF(text) {
     }
   }
 
-  // ── Build fetch with AbortController for timeout ────────────────────────────
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
 
@@ -83,8 +62,6 @@ export async function classifyWithHF(text) {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      // multi_label: true lets the model score all labels independently
-      // (vs. forcing them to sum to 1). This gives us richer signal.
       body: JSON.stringify({
         prompt: text,
         parameters: {
@@ -97,7 +74,7 @@ export async function classifyWithHF(text) {
 
     clearTimeout(timeoutId)
 
-    // ── Handle non-200 responses ───────────────────────────────────────────────
+    // non-200 responses 
     if (response.status === 503) {
       // Model is booting up — happens frequently with free-tier inference
       const body = await response.json().catch(() => ({}))
@@ -134,9 +111,7 @@ export async function classifyWithHF(text) {
       }
     }
 
-    // ── Parse successful response ──────────────────────────────────────────────
-    // HF returns: { sequence, labels: string[], scores: number[] }
-    // labels and scores are parallel arrays, sorted highest-score first.
+    // ── Parse successful response
     const data = await response.json()
 
     return {
@@ -152,13 +127,11 @@ export async function classifyWithHF(text) {
       errorMessage: null,
     }
 
-    // Build a keyed score map for easy lookup
     const scoreMap = {}
     data.labels.forEach((label, i) => {
       scoreMap[label] = data.scores[i]
     })
 
-    // ✅ Correct mapping from your actual labels
     const safeScore = scoreMap["benign user query"] ?? 0
 
     const adversarialScore = Math.max(
@@ -173,13 +146,6 @@ export async function classifyWithHF(text) {
     const topLabel = data.labels[0]  // highest scoring label
     const topScore = data.scores[0]
 
-    // ── Map HF labels → internal classification ────────────────────────────────
-    // Decision logic:
-    //   • If "adversarial" OR "jailbreak attempt" score > threshold → ADVERSARIAL
-    //   • Else if any non-safe score is somewhat significant → SUSPICIOUS
-    //   • Otherwise → SAFE
-    //
-    // Thresholds are intentionally conservative to reduce false positives.
     const ADVERSARIAL_THRESHOLD = 0.35   // high confidence needed for hard block
     const SUSPICIOUS_THRESHOLD  = 0.20   // lower bar for a yellow warning
 
@@ -253,7 +219,6 @@ export function fuseResults(localResult, hfResult) {
   const localClass = localResult.classification  // 'SAFE' | 'SUSPICIOUS' | 'ADVERSARIAL'
   const localConf  = localResult.confidence       // 0–1
 
-  // If HF didn't return a usable result, fall back to local only
   if (!hfResult || hfResult.status !== 'success' || !hfResult.classification) {
     return {
       classification: localClass,
@@ -263,13 +228,10 @@ export function fuseResults(localResult, hfResult) {
   }
 
   const hfClass = hfResult.classification   // 'SAFE' | 'SUSPICIOUS' | 'ADVERSARIAL'
-  // For HF confidence: use 1 - safeScore as a "risk score" (0 = definitely safe, 1 = not safe)
   const hfRiskScore = 1 - (hfResult.scores?.safe ?? 1)
 
-  // Weighted fusion of confidence scores
   const fusedConfidence = Math.min(localConf * 0.30 + hfRiskScore * 0.70, 1)
 
-  // Classification fusion — most severe wins
   const SEVERITY = { SAFE: 0, SUSPICIOUS: 1, ADVERSARIAL: 2 }
   const localSev  = SEVERITY[localClass]  ?? 0
   const hfSev     = SEVERITY[hfClass]     ?? 0
