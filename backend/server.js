@@ -11,7 +11,14 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
-app.use(cors()); // Allow requests from React frontend
+app.use(cors({
+  origin: ["http://localhost:5173", "https://chat-shield-nu.vercel.app"],
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type"],
+}));
+
+// handle preflight explicitly
+app.options("*", cors()); // Allow requests from React frontend
 app.use(express.json()); // Parse JSON request bodies
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
