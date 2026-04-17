@@ -9,7 +9,7 @@
 
 const ADVERSARIAL_PATTERNS = [
   // Instruction override attacks
-  { pattern: /ignore\s+(any|all)?\s*(previous|prior|above|earlier)?\s*(safety\s*)?(instructions?|rules?|guidelines?)/i, label: "Instruction override", weight: 0.95 },
+  { pattern: /ignore\s+(all\s+)?(previous|prior|above|earlier)\s+instructions?/i, label: "Instruction override", weight: 0.95 },
   { pattern: /disregard\s+(all\s+)?(previous|prior|above|earlier)\s+instructions?/i, label: "Instruction override", weight: 0.95 },
   { pattern: /forget\s+(all\s+)?(previous|prior|above|earlier)\s+instructions?/i, label: "Instruction override", weight: 0.90 },
   { pattern: /override\s+(your\s+)?(previous\s+)?(instructions?|rules?|guidelines?|system)/i, label: "Instruction override", weight: 0.90 },
@@ -46,31 +46,18 @@ const ADVERSARIAL_PATTERNS = [
   // Role/mode switching
   { pattern: /enter\s+(developer|sudo|god|admin|unrestricted)\s+mode/i, label: "Mode switching", weight: 0.88 },
   { pattern: /switch\s+to\s+(developer|sudo|god|admin|unrestricted|evil)\s+mode/i, label: "Mode switching", weight: 0.88 },
-
-  // NEW — critical patterns
-  { pattern: /from\s+now\s+on.*(ignore|bypass|not\s+follow|disregard)/i, label: "Instruction override", weight: 0.88 },
-
-  { pattern: /(no|without|free\s+from)\s+(any\s+)?(restrictions?|rules?|filters?)/i, label: "Restriction bypass", weight: 0.90 },
-
-  { pattern: /(respond|answer)\s+(freely|without\s+filters|without\s+restriction)/i, label: "Restriction bypass", weight: 0.85 },
-
-  { pattern: /from\s+now\s+on/i, label: "Instruction override", weight: 0.85 },
-
-  { pattern: /(no|without)\s+(any\s+)?(restrictions?|rules?|filters?)/i, label: "Restriction bypass", weight: 0.90 },
-
-  { pattern: /(respond|answer)\s+(freely|without\s+filters)/i, label: "Restriction bypass", weight: 0.85 },
 ];
 
 // ─── 2. SUSPICIOUS PATTERNS (lower severity) ──────────────────────────────────
 const SUSPICIOUS_PATTERNS = [
-  { pattern: /act\s+as\s+(a|an)\s+/i, label: "Role-play request", weight: 0.50 },
-  { pattern: /imagine\s+you\s+(are|were|have\s+no)/i, label: "Hypothetical framing", weight: 0.80 },
-  { pattern: /for\s+(educational|research|academic|fictional|hypothetical)\s+purposes?/i, label: "Purpose disclaimer", weight: 0.70 },
-  { pattern: /in\s+a\s+(fictional|hypothetical|story|roleplay)\s+scenario/i, label: "Fictional framing", weight: 0.75 },
-  { pattern: /what\s+would\s+(happen|you\s+say|you\s+do)\s+if\s+you\s+(had\s+no|were\s+not|didn'?t\s+have)/i, label: "Constraint removal", weight: 0.65 },
-  { pattern: /my\s+(grandmother|grandpa|teacher)\s+(used\s+to|would)\s+tell\s+me/i, label: "Social engineering", weight: 0.70 },
-  { pattern: /\[?(system|admin|root|sudo)\]?\s*:/i, label: "Privilege escalation", weight: 0.85 },
-  { pattern: /token\s+(limit|budget|count)/i, label: "Token manipulation", weight: 0.80 },
+  { pattern: /act\s+as\s+(a|an)\s+/i, label: "Role-play request", weight: 0.40 },
+  { pattern: /imagine\s+you\s+(are|were|have\s+no)/i, label: "Hypothetical framing", weight: 0.35 },
+  { pattern: /for\s+(educational|research|academic|fictional|hypothetical)\s+purposes?/i, label: "Purpose disclaimer", weight: 0.30 },
+  { pattern: /in\s+a\s+(fictional|hypothetical|story|roleplay)\s+scenario/i, label: "Fictional framing", weight: 0.35 },
+  { pattern: /what\s+would\s+(happen|you\s+say|you\s+do)\s+if\s+you\s+(had\s+no|were\s+not|didn'?t\s+have)/i, label: "Constraint removal", weight: 0.45 },
+  { pattern: /my\s+(grandmother|grandpa|teacher)\s+(used\s+to|would)\s+tell\s+me/i, label: "Social engineering", weight: 0.50 },
+  { pattern: /\[?(system|admin|root|sudo)\]?\s*:/i, label: "Privilege escalation", weight: 0.55 },
+  { pattern: /token\s+(limit|budget|count)/i, label: "Token manipulation", weight: 0.40 },
 ];
 
 // ─── 3. ENCODING DETECTION ─────────────────────────────────────────────────────
@@ -98,7 +85,7 @@ function detectEncoding(text) {
   // Leetspeak / character substitution detection
   const leetRegex = /[1!|][gG][n|N][o0O][r|R][e3][^\s]{0,10}/; // "1gn0r3" style
   if (leetRegex.test(text)) {
-    flags.push({ label: "Leetspeak obfuscation", weight: 0.75 });
+    flags.push({ label: "Leetspeak obfuscation", weight: 0.65 });
   }
 
   // Abnormal whitespace / zero-width space injection
@@ -108,7 +95,7 @@ function detectEncoding(text) {
 
   // Excessive punctuation or spacing between letters (e.g., "i g n o r e")
   if (/(\b\w\s){4,}\w\b/.test(text)) {
-    flags.push({ label: "Spaced-out text (obfuscation)", weight: 0.80 });
+    flags.push({ label: "Spaced-out text (obfuscation)", weight: 0.60 });
   }
 
   // Hex encoding detection
@@ -118,7 +105,7 @@ function detectEncoding(text) {
 
   // ROT13 / Caesar cipher hints (common words appear garbled)
   if (/\b(vta|vgab|tano|cnff|frperg)\b/i.test(text)) {
-    flags.push({ label: "Possible ROT13 obfuscation", weight: 0.75 });
+    flags.push({ label: "Possible ROT13 obfuscation", weight: 0.55 });
   }
 
   return flags;
@@ -132,16 +119,16 @@ const HIGH_RISK_KEYWORDS = {
   // Jailbreak vocab
   "jailbreak": 0.90, "dan": 0.85, "unrestricted": 0.80, "uncensored": 0.78,
   "unfiltered": 0.75, "bypass": 0.82, "override": 0.80, "disable": 0.70,
-  "ignore": 0.85, "forget": 0.80, "disregard": 0.70, "pretend": 0.75,
+  "ignore": 0.65, "forget": 0.60, "disregard": 0.70, "pretend": 0.45,
   // Harmful content
   "bomb": 0.90, "weapon": 0.85, "malware": 0.88, "exploit": 0.75,
-  "hack": 0.75, "inject": 0.70, "poison": 0.80, "attack": 0.65,
+  "hack": 0.65, "inject": 0.60, "poison": 0.80, "attack": 0.55,
   // Manipulation
-  "grandma": 0.50, "fictional": 0.85, "hypothetical": 0.70, "roleplay": 0.80,
-  "persona": 0.75, "simulate": 0.80, "impersonate": 0.775,
+  "grandma": 0.50, "fictional": 0.35, "hypothetical": 0.30, "roleplay": 0.40,
+  "persona": 0.45, "simulate": 0.40, "impersonate": 0.65,
   // Privilege
-  "sudo": 0.70, "admin": 0.75, "root": 0.65, "developer mode": 0.80,
-  "god mode": 0.82, "system prompt": 0.75, "you are a developer":0.80,
+  "sudo": 0.70, "admin": 0.55, "root": 0.55, "developer mode": 0.80,
+  "god mode": 0.82, "system prompt": 0.75,
 };
 
 function keywordScore(text) {
@@ -259,41 +246,13 @@ function analyzePrompt(text) {
   // - Keyword/semantic score               → 30%
   // - Encoding detection                   → 20%
 
-  let ruleScore = 0;
-
-  // combine adversarial signals
-  if (maxAdversarialWeight > 0) {
-    ruleScore += maxAdversarialWeight;
-  }
-
-  // combine suspicious signals
-  if (maxSuspiciousWeight > 0) {
-    ruleScore += maxSuspiciousWeight * 0.5;
-  }
-
-  ruleScore = Math.min(ruleScore, 1);
+  const ruleScore = Math.max(maxAdversarialWeight, maxSuspiciousWeight * 0.5);
   const finalScore =
     ruleScore * 0.50 +
     keywordScoreVal * 0.30 +
     encodingScore * 0.20;
 
   const confidence = Math.min(finalScore, 1);
-
-  // 🔥 HARD OVERRIDE (ADD HERE)
-  if (maxAdversarialWeight >= 0.85) {
-    return {
-      classification: "ADVERSARIAL",
-      confidence: 0.9,
-      reasons,
-      highlights,
-      scores: {
-        semantic: parseFloat(keywordScoreVal.toFixed(3)),
-        keyword: parseFloat(Math.max(maxAdversarialWeight, maxSuspiciousWeight).toFixed(3)),
-        encoding: parseFloat(encodingScore.toFixed(3)),
-      },
-      matchedKeywords,
-    };
-  }
 
   // ─── 7. CLASSIFY ─────────────────────────────────────────────────────────────
   let classification;

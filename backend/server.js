@@ -11,20 +11,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*"); // allow ALL
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-
-  next();
-});
-
-// handle preflight explicitly
-app.options("*", cors()); // Allow requests from React frontend
+app.use(cors()); // Allow requests from React frontend
 app.use(express.json()); // Parse JSON request bodies
 
 // ─── Health Check ─────────────────────────────────────────────────────────────

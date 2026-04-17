@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+dist/
+.vite/
+
+# Environment secrets — NEVER commit the real .env
+.env
+.env.local
+.env.production
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
