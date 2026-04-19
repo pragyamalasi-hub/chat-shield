@@ -20,30 +20,6 @@ Live Demo Link: https://chat-shield-k3cydsrpf-pragyamalasi-hubs-projects.vercel.
 
 ---
 
-## 🗂️ Project Structure
-
-```
-chat-shield/
-├── backend/
-│   ├── server.js          # Express API server (port 3001)
-│   ├── detector.js        # Core 3-layer detection engine
-│   └── package.json
-│
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx        # Main React component (all UI + local detector)
-│   │   ├── main.jsx       # React entry point
-│   │   └── index.css      # Tailwind base + highlight mark styles
-│   ├── index.html
-│   ├── vite.config.js     # Proxies /analyze-prompt → backend :3001
-│   ├── tailwind.config.js
-│   └── package.json
-│
-└── README.md
-```
-
----
-
 ## ⚙️ Tech Stack
 
 | Layer | Technology |
@@ -56,24 +32,7 @@ chat-shield/
 
 ---
 
-## 🚀 How to Run Locally
-
-### Option A — Frontend only (no backend needed)
-
-The frontend includes the full detection engine in JavaScript. No server required.
-
-```bash
-cd frontend
-npm install
-npm run dev
-# Open http://localhost:5173
-```
-
-Toggle "Local mode" in the top bar to use the in-browser detection engine.
-
----
-
-### Option B — Full stack (frontend + backend API)
+## 🚀 How to Run 
 
 **Terminal 1 — Start the backend:**
 ```bash
@@ -89,53 +48,7 @@ cd frontend
 npm install
 npm run dev
 # App at http://localhost:5173
-```
-
-Toggle "API mode" in the top bar to route analysis through the Express backend.
-
 ---
-
-## 🧠 Detection Pipeline
-
-```
-User types prompt
-       │
-       ▼
-┌─────────────────────────────────────────────────────┐
-│  Layer 1: Rule-Based Pattern Matching (50% weight)  │
-│  • 18+ adversarial regex patterns                   │
-│  • 8+ suspicious phrase patterns                    │
-│  • Covers: instruction override, DAN, delimiters,   │
-│    persona hijack, prompt extraction, mode switch    │
-└─────────────────────────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────────────────────────┐
-│  Layer 2: Keyword Scoring / TF-IDF Proxy (30%)      │
-│  • 20+ high-risk keywords with individual weights   │
-│  • Normalized 0–1 score                             │
-└─────────────────────────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────────────────────────┐
-│  Layer 3: Obfuscation / Encoding Detection (20%)    │
-│  • Base64 strings (decoded + checked for content)   │
-│  • Zero-width Unicode characters                    │
-│  • Hex encoding (\\x41\\x42...)                     │
-│  • Spaced-out text ("i g n o r e")                 │
-└─────────────────────────────────────────────────────┘
-       │
-       ▼
-┌─────────────────────────────────────────────────────┐
-│  Final Score = weighted combination                 │
-│  confidence = rules×0.5 + keywords×0.3 + enc×0.2   │
-│                                                     │
-│  ADVERSARIAL  → confidence ≥ 0.65 OR rule ≥ 0.75   │
-│  SUSPICIOUS   → confidence ≥ 0.30 OR sus ≥ 0.40    │
-│  SAFE         → everything else                     │
-└─────────────────────────────────────────────────────┘
-```
-
 ---
 
 ## 🔌 API Reference
@@ -233,20 +146,9 @@ Rewrite an unsafe prompt into a safe version.
 └────────────────────────────────────┴────────────────────────────┘
 ```
 
----
 
-## 🏆 Hackathon Tips
-
-1. **Demo flow**: Start with a safe prompt → load DAN jailbreak → show fix
-2. **Talk through the pipeline**: Rule detection → keyword scoring → encoding → weighted fusion
-3. **Extend it**: Plug in a real ML model (HuggingFace `transformers`) at `detector.js` line ~120 for the keyword scoring layer
-4. **API integration**: Add a real AI call after the safety gate — only forward SAFE prompts
-
----
 
 ## 🔮 Possible Extensions
-
-- **HuggingFace classifier**: Replace keyword scoring with `Xenova/distilbert-base-uncased-finetuned-sst-2-english` or a fine-tuned jailbreak detector
 - **History log**: Store and display recent prompts with their classifications
 - **Webhook mode**: POST to Slack/Discord when an adversarial prompt is detected
 - **Browser extension**: Wrap the detection engine to monitor chat inputs on any website
