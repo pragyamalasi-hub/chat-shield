@@ -117,6 +117,3 @@ Rewrite an unsafe prompt into a safe version.
 
 ---
 
-## 📄 License
-
-MIT — build freely, ship fast.
