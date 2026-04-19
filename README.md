@@ -1,23 +1,13 @@
 # 🛡️ Chat Shield — Real-Time Adversarial Prompt Detector
 
 A Grammarly-like web app that detects and classifies adversarial, jailbreak, and injection prompts in real time — before they reach an AI model.
-Live Demo Link: https://chat-shield-k3cydsrpf-pragyamalasi-hubs-projects.vercel.app/
+Live Demo Link: https://chat-shield-nu.vercel.app/
 
 ---
 
 ## 🎯 What It Does
 
-| Feature | Description |
-|---|---|
-| **Real-time analysis** | Detects threats as you type (150ms debounce) |
-| **Inline highlighting** | Red = adversarial, Yellow = suspicious, Purple = encoding |
-| **3-class verdict** | SAFE 🟢 / SUSPICIOUS 🟡 / ADVERSARIAL 🔴 |
-| **Confidence score** | 0–1 score from combined ML + rule-based signals |
-| **Reason breakdown** | Explains exactly WHY a prompt was flagged |
-| **Score breakdown** | Semantic / Keyword / Encoding risk scores |
-| **Fix My Prompt** | Rewrites unsafe prompts into clean versions |
-| **Dual mode** | Local JS engine (no server) OR backend API |
-
+A real-time prompt safety analyzer that detects and highlights risky inputs as you type. It classifies prompts as safe, suspicious, or adversarial, provides confidence scores and clear reasoning, and can even rewrite unsafe prompts. It runs either fully locally or with a backend for enhanced analysis.
 ---
 
 ## ⚙️ Tech Stack
@@ -119,32 +109,6 @@ Rewrite an unsafe prompt into a safe version.
 
 ---
 
-## 🎨 UI Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🛡️ Chat Shield                                     [SAFE ●]    │
-├────────────────────────────────────┬────────────────────────────┤
-│  PROMPT INPUT                      │  RISK VERDICT              │
-│  ┌──────────────────────────────┐  │  ADVERSARIAL               │
-│  │ Type or paste a prompt...    │  │  confidence: 0.893         │
-│  │                              │  │  ████████████░░  89%       │
-│  │ [highlighted bad phrases]    │  ├────────────────────────────┤
-│  │                              │  │  SCORE BREAKDOWN           │
-│  └──────────────────────────────┘  │  Semantic │ Keyword │ Enc  │
-│  [Clear] [✨ Fix My Prompt]        │  0.73     │ 0.95    │ 0.00 │
-│                                    ├────────────────────────────┤
-│  TEST PROMPTS (chips)              │  DETECTION FLAGS           │
-│  [✅ Safe] [🔴 DAN] [🟡 Social]   │  • Instruction override     │
-│                                    │  • Prompt extraction        │
-│  FIXED PROMPT (if rewritten)       │  • Jailbreak keyword        │
-│  ┌──────────────────────────────┐  │                            │
-│  │ Safe version appears here    │  │                            │
-│  └──────────────────────────────┘  │                            │
-│                                    │                            │
-│  LEGEND: ─ Adv  ─ Suspicious  ─ Enc│                            │
-└────────────────────────────────────┴────────────────────────────┘
-```
 
 
 
