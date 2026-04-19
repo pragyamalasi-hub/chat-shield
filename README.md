@@ -1,7 +1,7 @@
 # 🛡️ Chat Shield — Real-Time Adversarial Prompt Detector
 
 A Grammarly-like web app that detects and classifies adversarial, jailbreak, and injection prompts in real time — before they reach an AI model.
-Live Demo Link: https://chat-shield-k3cydsrpf-pragyamalasi-hubs-projects.vercel.app/
+Live Demo Link: https://chat-shield-nu.vercel.app/
 
 ---
 
