@@ -6,8 +6,8 @@ Live Demo Link: https://chat-shield-nu.vercel.app/
 ---
 
 ## 🎯 What It Does
-
 A real-time prompt safety analyzer that detects and highlights risky inputs as you type. It classifies prompts as safe, suspicious, or adversarial, provides confidence scores and clear reasoning, and can even rewrite unsafe prompts. It runs either fully locally or with a backend for enhanced analysis.
+
 ---
 
 ## ⚙️ Tech Stack
@@ -109,9 +109,6 @@ Rewrite an unsafe prompt into a safe version.
 
 ---
 
-
-
-
 ## 🔮 Possible Extensions
 - **History log**: Store and display recent prompts with their classifications
 - **Webhook mode**: POST to Slack/Discord when an adversarial prompt is detected
@@ -120,6 +117,3 @@ Rewrite an unsafe prompt into a safe version.
 
 ---
 
-## 📄 License
-
-MIT — build freely, ship fast.
